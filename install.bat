@@ -1,6 +1,6 @@
 @echo off
 
-if not exists "%~dp0venv\" (
+if not exist "%~dp0venv\" (
     echo "venv not found, creating..."
     python -m venv venv
 ) else (
