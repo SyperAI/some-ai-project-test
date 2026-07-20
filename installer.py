@@ -4,6 +4,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from utils.gpu import get_gpu_name
+
 OS_TYPE = platform.system()
 
 if getattr(sys, 'frozen', False):
@@ -119,7 +121,11 @@ if __name__ == "__main__":
     # install_requirements()
 
     from utils import Config
+
     config = Config(allow_missing=True).load()
+
+    if get_gpu_name() is None:
+        print("GPU drivers may be incompatible or missing!")
 
     sd_poll()
 

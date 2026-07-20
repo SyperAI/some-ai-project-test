@@ -8,5 +8,4 @@ logger = logging.getLogger()
 
 config = Config(allow_missing=True).load()
 
-from .sd_webui import vram_gb
 from .utils import *

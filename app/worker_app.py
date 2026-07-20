@@ -7,8 +7,9 @@ from typing import Dict, Callable, Any
 import httpx
 from pydantic import BaseModel
 
-from utils import config, vram_gb, logger
+from utils import config, logger
 from utils.gpu import get_gpu_name
+from utils.sd_webui import vram_gb
 from utils.timer import Timer
 from utils.types import TaskType, T2IRequest, T2IResponse, AIType, LLMRequest
 
