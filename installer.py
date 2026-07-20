@@ -107,16 +107,16 @@ def sd_poll() -> None:
 
 
 if __name__ == "__main__":
-    venv_name = create_venv()
-
-    if os.name == "nt":
-        pip_path = os.path.join(venv_name, "Scripts", "pip.exe")
-        python_path = os.path.join(venv_name, "Scripts", "python.exe")
-    else:
-        pip_path = os.path.join(venv_name, "bin", "pip")
-        python_path = os.path.join(venv_name, "bin", "python")
-
-    install_requirements()
+    # venv_name = create_venv()
+    #
+    # if os.name == "nt":
+    #     pip_path = os.path.join(venv_name, "Scripts", "pip.exe")
+    #     python_path = os.path.join(venv_name, "Scripts", "python.exe")
+    # else:
+    #     pip_path = os.path.join(venv_name, "bin", "pip")
+    #     python_path = os.path.join(venv_name, "bin", "python")
+    #
+    # install_requirements()
 
     from utils import Config
     config = Config(allow_missing=True).load()
