@@ -82,6 +82,17 @@ def install_sd(path: str) -> None:
             "Failed to install SD. Try installing it manually: https://github.com/automatic1111/stable-diffusion-webui#installation-and-running")
         sys.exit(1)
 
+    try:
+        subprocess.run([sys.executable, "-m", "venv", os.path.join(path, "venv")], check=True)
+
+        if os.name == "nt":
+            pip_path = os.path.join(path, "Scripts", "pip.exe")
+        else:
+            pip_path = os.path.join(path, "bin", "pip")
+
+        subprocess.run([pip_path, "install", "-r", os.path.join(path, "requirements.txt")], check=True)
+    except subprocess.CalledProcessError:
+        print("Failed to install venv for SD!")
 
 def sd_poll() -> None:
     is_enabled = confirm_action("Do you want to enable Stable Diffusion?: ")
