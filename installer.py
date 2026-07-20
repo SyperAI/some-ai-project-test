@@ -4,8 +4,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-from utils import Config
-
 OS_TYPE = platform.system()
 
 if getattr(sys, 'frozen', False):
@@ -120,6 +118,7 @@ if __name__ == "__main__":
 
     install_requirements()
 
+    from utils import Config
     config = Config(allow_missing=True).load()
 
     sd_poll()
