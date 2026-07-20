@@ -86,9 +86,9 @@ def install_sd(path: str) -> None:
         subprocess.run([sys.executable, "-m", "venv", os.path.join(path, "venv")], check=True)
 
         if os.name == "nt":
-            pip_path = os.path.join(path, "Scripts", "pip.exe")
+            pip_path = os.path.join(path, "venv", "Scripts", "pip.exe")
         else:
-            pip_path = os.path.join(path, "bin", "pip")
+            pip_path = os.path.join(path, "venv", "bin", "pip")
 
         subprocess.run([pip_path, "install", "-r", os.path.join(path, "requirements.txt")], check=True)
     except subprocess.CalledProcessError:
