@@ -57,7 +57,7 @@ def create_venv() -> str:
 
 def install_requirements() -> None:
     # Updating pip
-    subprocess.run([pip_path, "install", "--upgrade", "pip"], check=True)
+    subprocess.run([python_path, "-m", "pip", "install", "--upgrade", "pip"], check=True)
 
     subprocess.run([pip_path, "install", "-r", "requirements.txt"], check=True)
 
