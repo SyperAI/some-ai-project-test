@@ -108,6 +108,13 @@ def sd_poll() -> None:
     config.SD_CONFIG.CONFIG.auto_start = True
 
 
+def worker_poll() -> None:
+    if config.MOTHER_NODE.url is None or confirm_action("URL of main server already choosed, do you want to change it? (Yes/No): "):
+        config.MOTHER_NODE.url = input("Enter URL of main server: ")
+    if config.MOTHER_NODE.key is None or confirm_action("Node key already exists, do you want to change it? (Yes/No): "):
+        config.MOTHER_NODE.key = input("Enter your node key: ")
+
+
 if __name__ == "__main__":
     # venv_name = create_venv()
     #
@@ -128,5 +135,6 @@ if __name__ == "__main__":
         print("GPU drivers may be incompatible or missing!")
 
     sd_poll()
+    worker_poll()
 
     config.save()
