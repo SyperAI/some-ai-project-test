@@ -1,6 +1,6 @@
 @echo off
 
 python installer.py
-python installer.py
+venv/Scripts/python.exe installer.py
 
 pause
