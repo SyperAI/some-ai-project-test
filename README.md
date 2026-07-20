@@ -15,7 +15,7 @@ At this point, it is an MVP, which means it may contain many bugs, unfinished fe
 ## How to Install 🚀
 1. **Clone Repository:**<br>
     ```bash
-    git clone 
+    git clone https://github.com/SyperAI/some-ai-project-test.git
     ```
 2. **Open the created folder**
 3. **For Windows:** Run `install.bat`
