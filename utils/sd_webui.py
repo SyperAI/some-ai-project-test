@@ -4,6 +4,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
+from subprocess import Popen
 
 import httpx
 import requests.exceptions
@@ -47,7 +48,6 @@ START_FLAGS = config.SD_CONFIG.CONFIG.start_flags.split(" ")
 
 command = [python_exe, LAUNCH_SCRIPT] + START_FLAGS + opti_flags
 
-
 def start_a1111():
     if sys.platform == "win32":
         process = subprocess.Popen(command, cwd=config.SD_CONFIG.CONFIG.path,
@@ -64,17 +64,17 @@ class SDWebUI(WebUIApi):
         return response.json()
 
 
-def get_webui() -> SDWebUI | None:
+def get_webui() -> tuple[SDWebUI, Popen | None] | None:
     if not config.SD_CONFIG.CONFIG.enable:
         logging.warning("SD WebUI is disabled which will result in not recieving SD tasks!")
         return None
-
+    sd_webui_process = None
     # Auto start
     if config.SD_CONFIG.CONFIG.auto_start and config.SD_CONFIG.CONFIG.path == "":
         raise ValueError("Can't start SD Web UI without SD path specified! Check config and try again.")
     elif config.SD_CONFIG.CONFIG.auto_start:
         logger.info("Starting SD Web UI.")
-        start_a1111()
+        sd_webui_process = start_a1111()
 
     webui_api = SDWebUI(
         host=config.SD_CONFIG.PARAMS.host,
@@ -91,4 +91,4 @@ def get_webui() -> SDWebUI | None:
                 logger.warning("SD Web UI connection failed, retrying in 1s...")
                 time.sleep(1)
 
-    return webui_api
+    return webui_api, sd_webui_process

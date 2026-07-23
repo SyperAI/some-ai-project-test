@@ -9,14 +9,14 @@ from utils import logger
 
 
 @lru_cache
-def get_file_md5(file_path: str) -> str:
-    md5_hash = hashlib.md5()
+def get_file_sha256(file_path: str) -> str:
+    sha256_hash = hashlib.sha256()
 
     with open(file_path, "rb") as f:
         for chunk in iter(lambda: f.read(32768), b""):
-            md5_hash.update(chunk)
+            sha256_hash.update(chunk)
 
-    return md5_hash.hexdigest()
+    return sha256_hash.hexdigest()
 
 
 def download(file_url: str, save_path: str | Path) -> Path | None:

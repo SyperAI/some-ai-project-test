@@ -5,14 +5,14 @@ from pathlib import Path
 import requests.exceptions
 
 from app.worker_app import WorkerApp
-from utils import config, get_file_md5, download
+from utils import config, get_file_sha256, download
 from utils.llm import get_ollama
 from utils.sd_webui import get_webui
 from utils.types import TaskType, SDModelsResponse, T2IRequest, T2IResponse, SDLora, LLMRequest
 
 app = WorkerApp(base_url=config.MOTHER_NODE.url, api_key=config.MOTHER_NODE.key)
 
-webui_api = get_webui()
+webui_api, sd_webui_process = get_webui()
 llm_client = get_ollama()
 
 
@@ -59,7 +59,7 @@ def check_lora(loras_info: list[SDLora]) -> bool:
 
     for lora_info in loras_info:
         for lora in loras:
-            if lora_info.hash == get_file_md5(lora['path']): break
+            if lora_info.hash == get_file_sha256(lora['path']): break
         else:
             logging.warning(f"Lora {os.path.basename(lora_info.path)} not found will try to download.")
             if download(file_url=lora_info.path,
@@ -120,4 +120,8 @@ def llm_task(task: LLMRequest):
 
 
 if __name__ == "__main__":
-    app.run()
+    try:
+        app.run()
+    except KeyboardInterrupt:
+        if sd_webui_process is not None:
+            sd_webui_process.kill()
