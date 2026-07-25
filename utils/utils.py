@@ -27,12 +27,12 @@ def download(file_url: str, save_path: str | Path) -> Path | None:
 
     logger.debug(f"Downloading {file_url} to {save_path}")
     try:
-        with httpx.Client() as client:
+        with httpx.Client(http2=True) as client:
             with client.stream("GET", file_url) as response:
                 response.raise_for_status()
 
                 with open(save_path, "wb") as f:
-                    for chunk in response.iter_bytes(chunk_size=8192):
+                    for chunk in response.iter_bytes(chunk_size=1024 * 1024 * 5):
                         f.write(chunk)
     except Exception as e:
         logger.error(f"Failed to download {file_url}: {e}")

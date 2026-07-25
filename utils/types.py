@@ -1,5 +1,6 @@
 import hashlib
 import io
+import os
 from enum import Enum
 from typing import Optional, List, Any
 
@@ -57,6 +58,14 @@ class SDADetailer(BaseModel):
         return self.model_dump(exclude_none=True, by_alias=True)
 
 
+class AIModelData(BaseModel):
+    path: str
+    hash: str
+
+    @property
+    def filename(self): return os.path.basename(self.path)
+
+
 class T2IRequest(BaseModel):
     prompt: str
     negative_prompt: str = ""
@@ -76,7 +85,7 @@ class T2IRequest(BaseModel):
     hr_upscaler: str = "Latent"
     hr_second_pass_steps: int = 0
 
-    model: str = None
+    model: AIModelData
     lora_info: Optional[list[SDLora]] = []
     adetailer: SDADetailer | None = None
 

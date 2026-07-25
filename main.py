@@ -8,7 +8,7 @@ from app.worker_app import WorkerApp
 from utils import config, get_file_sha256, download
 from utils.llm import get_ollama
 from utils.sd_webui import get_webui
-from utils.types import TaskType, SDModelsResponse, T2IRequest, T2IResponse, SDLora, LLMRequest
+from utils.types import TaskType, SDModelsResponse, T2IRequest, T2IResponse, SDLora, LLMRequest, AIModelData
 
 app = WorkerApp(base_url=config.MOTHER_NODE.url, api_key=config.MOTHER_NODE.key)
 
@@ -38,17 +38,23 @@ def models_list():
     return models.model_dump(include={'__all__': {'model_name', 'sha256'}})
 
 
-def check_model(model_name: str) -> bool:
-    models = webui_api.get_sd_models()
+def check_model(model: AIModelData) -> bool:
+    local_models = webui_api.get_sd_models()
 
-    for model in models:
-        if model_name in model['sha256']:
+    for local_model in local_models:
+        if model.hash == local_model['sha256']:
             return True
 
+    logging.warning(f"Requested model {model.filename}[{model.hash}] not found, trying download...")
     if download(
-            file_url=os.path.join("https://d7h1.c16.e2-4.dev/test/", model_name),
+            file_url=model.path,
             save_path=Path(config.SD_CONFIG.CONFIG.path, "models", "Stable-diffusion")
-    ) is not None: return check_model(model_name)
+    ) is not None:
+        logging.info(f"Model {model.filename}[{model.hash}] downloaded, checking SD availability...")
+
+        # Refreshing SD models list to apply updates after download
+        webui_api.refresh_models()
+        return check_model(model)
 
     return False
 
@@ -74,10 +80,10 @@ def txt2img(task: T2IRequest):
     alwayson_scripts = {}
 
     # Check and use model
-    if task.model != "":
-        if not check_model(task.model):
-            return None
-        webui_api.set_options({"sd_model_checkpoint": task.model})
+    if not check_model(task.model):
+        return None
+    webui_api.set_options({"sd_model_checkpoint": task.model.filename})
+
 
     # Check LoRa and download if not exists
     if len(task.lora_info) > 0:
