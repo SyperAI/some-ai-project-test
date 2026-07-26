@@ -90,7 +90,8 @@ def install_sd(path: str) -> None:
         else:
             pip_path = os.path.join(path, "venv", "bin", "pip")
 
-        subprocess.run([pip_path, "install", "-r", os.path.join(path, "requirements.txt")], check=True)
+        subprocess.run([pip_path, "install", "torch", "torchvision", "torchaudio", "--index-url", "https://download.pytorch.org/whl/cu121"])
+        subprocess.run([pip_path, "install", "-r", os.path.join(path, "requirements_versions.txt")], check=True)
 
         # CLIP installation fix
         subprocess.run([pip_path, "install", "setuptools==69.5.1"])
