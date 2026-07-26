@@ -1,5 +1,7 @@
 @echo off
 
+git pull
+
 if not exist "%~dp0venv\" (
     echo "venv not found, creating..."
     python -m venv venv
