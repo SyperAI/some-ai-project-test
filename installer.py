@@ -87,8 +87,12 @@ def install_sd(path: str) -> None:
 
         if os.name == "nt":
             pip_path = os.path.join(path, "venv", "Scripts", "pip.exe")
+            python_path = os.path.join(path, "venv", "Scripts", "python")
         else:
             pip_path = os.path.join(path, "venv", "bin", "pip")
+            python_path = os.path.join(path, "venv", "bin", "python")
+
+        subprocess.run([python_path, "-m", "pip", "install", "--upgrade", "pip", "setuptools", "wheel"])
 
         subprocess.run([pip_path, "install", "torch", "torchvision", "torchaudio", "--index-url", "https://download.pytorch.org/whl/cu121"])
         subprocess.run([pip_path, "install", "-r", os.path.join(path, "requirements_versions.txt")], check=True)
