@@ -96,7 +96,7 @@ def install_sd(path: str) -> None:
         subprocess.run([python_path, "-m", "pip", "install", "--upgrade", "pip", "setuptools", "wheel"])
 
         print("Installing SD requirements...")
-        subprocess.run([pip_path, "install", "torch", "torchvision", "torchaudio", "--index-url", "https://download.pytorch.org/whl/cu121"])
+        subprocess.run([pip_path, "install", "torch==2.1.2", "torchvision==0.16.2", "torchaudio==2.1.2", "--index-url", "https://download.pytorch.org/whl/cu121"])
         subprocess.run([pip_path, "install", "-r", os.path.join(path, "requirements_versions.txt")], check=True)
 
         if get_compute_cap() >= 7.0:

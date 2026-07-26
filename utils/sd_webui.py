@@ -87,13 +87,16 @@ def get_webui() -> tuple[SDWebUI, Popen | None] | None:
         username=config.SD_CONFIG.PARAMS.username,
         password=config.SD_CONFIG.PARAMS.password,
     )
-    if config.SD_CONFIG.PARAMS.default_model != "":
-        for x in range(30):
-            try:
-                webui_api.set_options({"sd_model_checkpoint": config.SD_CONFIG.PARAMS.default_model})
-                break
-            except requests.exceptions.ConnectionError:
-                logger.warning("SD Web UI connection failed, retrying in 1s...")
-                time.sleep(1)
+
+    for x in range(30):
+        try:
+            webui_api.get_sd_models()
+
+            # Applying default model if exists in config
+            if config.SD_CONFIG.PARAMS.default_model != "": webui_api.set_options({"sd_model_checkpoint": config.SD_CONFIG.PARAMS.default_model})
+            break
+        except requests.exceptions.ConnectionError:
+            logger.warning("SD Web UI connection failed, retrying in 1s...")
+            time.sleep(1)
 
     return webui_api, sd_webui_process
