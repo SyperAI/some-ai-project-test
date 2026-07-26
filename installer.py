@@ -92,12 +92,15 @@ def install_sd(path: str) -> None:
             pip_path = os.path.join(path, "venv", "bin", "pip")
             python_path = os.path.join(path, "venv", "bin", "python")
 
+        print("Upgrading SD pip...")
         subprocess.run([python_path, "-m", "pip", "install", "--upgrade", "pip", "setuptools", "wheel"])
 
+        print("Installing SD requirements...")
         subprocess.run([pip_path, "install", "torch", "torchvision", "torchaudio", "--index-url", "https://download.pytorch.org/whl/cu121"])
         subprocess.run([pip_path, "install", "-r", os.path.join(path, "requirements_versions.txt")], check=True)
 
         # CLIP installation fix
+        print("Installing CLIP...")
         subprocess.run([pip_path, "install", "setuptools==69.5.1"])
         subprocess.run([pip_path, "install", "--no-build-isolation", "https://github.com/openai/CLIP/archive/d50d76daa670286dd6cacf3bcd80b5e4823fc8e1.zip"])
     except subprocess.CalledProcessError:

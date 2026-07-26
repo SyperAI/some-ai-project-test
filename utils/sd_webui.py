@@ -50,10 +50,13 @@ if "--no-download-sd-model" not in START_FLAGS: START_FLAGS.append("--no-downloa
 
 command = [python_exe, LAUNCH_SCRIPT] + START_FLAGS + opti_flags
 
+
+os.environ["STABLE_DIFFUSION_REPO"] = "https://github.com/w-e-w/stablediffusion.git"
+
 def start_a1111():
     if sys.platform == "win32":
         process = subprocess.Popen(command, cwd=config.SD_CONFIG.CONFIG.path,
-                                   creationflags=subprocess.CREATE_NEW_CONSOLE, env={"STABLE_DIFFUSION_REPO": "https://github.com/w-e-w/stablediffusion.git"})
+                                   creationflags=subprocess.CREATE_NEW_CONSOLE)
     else:
         process = subprocess.Popen(command, cwd=config.SD_CONFIG.CONFIG.path)
 
