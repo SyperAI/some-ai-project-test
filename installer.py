@@ -91,6 +91,10 @@ def install_sd(path: str) -> None:
             pip_path = os.path.join(path, "venv", "bin", "pip")
 
         subprocess.run([pip_path, "install", "-r", os.path.join(path, "requirements.txt")], check=True)
+
+        # CLIP installation fix
+        subprocess.run([pip_path, "install", "setuptools==69.5.1"])
+        subprocess.run([pip_path, "install", "--no-build-isolation", "https://github.com/openai/CLIP/archive/d50d76daa670286dd6cacf3bcd80b5e4823fc8e1.zip"])
     except subprocess.CalledProcessError:
         print("Failed to install venv for SD!")
 

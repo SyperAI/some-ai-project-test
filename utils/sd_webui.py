@@ -45,13 +45,15 @@ else:
 
 LAUNCH_SCRIPT = "launch.py"
 START_FLAGS = config.SD_CONFIG.CONFIG.start_flags.split(" ")
+# Dont download default junk sd1.5 model on start
+if "--no-download-sd-model" not in START_FLAGS: START_FLAGS.append("--no-download-sd-model")
 
 command = [python_exe, LAUNCH_SCRIPT] + START_FLAGS + opti_flags
 
 def start_a1111():
     if sys.platform == "win32":
         process = subprocess.Popen(command, cwd=config.SD_CONFIG.CONFIG.path,
-                                   creationflags=subprocess.CREATE_NEW_CONSOLE)
+                                   creationflags=subprocess.CREATE_NEW_CONSOLE, env={"STABLE_DIFFUSION_REPO": "https://github.com/w-e-w/stablediffusion.git"})
     else:
         process = subprocess.Popen(command, cwd=config.SD_CONFIG.CONFIG.path)
 
