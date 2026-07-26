@@ -4,7 +4,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from utils.gpu import get_gpu_name
+from utils.gpu import get_gpu_name, get_compute_cap
 
 OS_TYPE = platform.system()
 
@@ -98,6 +98,10 @@ def install_sd(path: str) -> None:
         print("Installing SD requirements...")
         subprocess.run([pip_path, "install", "torch", "torchvision", "torchaudio", "--index-url", "https://download.pytorch.org/whl/cu121"])
         subprocess.run([pip_path, "install", "-r", os.path.join(path, "requirements_versions.txt")], check=True)
+
+        if get_compute_cap() >= 7.0:
+            print("Installing xformers...")
+            subprocess.run([pip_path, "install", "xformers==0.0.23.post1", "--index-url", "https://download.pytorch.org/whl/cu121"])
 
         # CLIP installation fix
         print("Installing CLIP...")
