@@ -50,6 +50,10 @@ class WorkerApp:
     def _dispatch_and_execute(self, task_data: dict) -> Any:
         task_type = task_data.get("type")
 
+        if task_type not in get_supported():
+            logging.warning("Recieved unsupported task of type %s!", task_type)
+            return None
+
         logger.info(f"Task id={task_data['id']} of type {task_type} received")
 
         if not task_type:
@@ -118,7 +122,8 @@ class WorkerApp:
 
                     response = client.get(fetch_url, headers=headers)
                     if response.status_code != httpx.codes.OK:
-                        logging.error(f"Request failed with status code {response.status_code}")
+                        logging.error(f"Request failed with status code {response.status_code}, sleeping for 1s before retrying...")
+                        time.sleep(1)
                         continue
 
                     task_data = response.json()
