@@ -10,7 +10,7 @@ import httpx
 import requests.exceptions
 from webuiapi import WebUIApi
 
-from utils import config, logger
+from utils import config, logger, get_file_sha256
 from utils.gpu import get_vram, get_compute_cap
 
 if sys.platform == "win32":
@@ -69,10 +69,10 @@ class SDWebUI(WebUIApi):
         return response.json()
 
 
-def get_webui() -> tuple[SDWebUI, Popen | None] | None:
+def get_webui() -> tuple[None, None] | tuple[SDWebUI, Popen]:
     if not config.SD_CONFIG.CONFIG.enable:
         logging.warning("SD WebUI is disabled which will result in not recieving SD tasks!")
-        return None
+        return None, None
     sd_webui_process = None
     # Auto start
     if config.SD_CONFIG.CONFIG.auto_start and config.SD_CONFIG.CONFIG.path == "":
@@ -90,7 +90,13 @@ def get_webui() -> tuple[SDWebUI, Popen | None] | None:
 
     for x in range(30):
         try:
-            webui_api.get_sd_models()
+            models = webui_api.get_sd_models()
+            logger.info(f"Connected to SD and found {len(models)} checkpoints")
+
+            # Cache models hash
+            for model in models:
+                model_sha256 = get_file_sha256(model['filename'])
+                logger.info(f"Found SD model {model['title']}[{model_sha256}]")
 
             # Applying default model if exists in config
             if config.SD_CONFIG.PARAMS.default_model != "": webui_api.set_options({"sd_model_checkpoint": config.SD_CONFIG.PARAMS.default_model})

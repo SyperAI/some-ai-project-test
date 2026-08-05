@@ -39,24 +39,27 @@ def models_list():
 
 
 def check_model(model: AIModelData) -> bool:
+    webui_api.refresh_checkpoints()
+
     local_models = webui_api.get_sd_models()
 
     for local_model in local_models:
-        if model.hash == local_model['sha256']:
-            return True
+        # We need to check twice because A1111 dont create hash for never loaded models but we dont want to re-download model
+        if model.hash == local_model['sha256'] or model.hash == get_file_sha256(local_model['filename']): return True
 
     logging.warning(f"Requested model {model.filename}[{model.hash}] not found, trying download...")
-    if download(
-            file_url=model.path,
-            save_path=Path(config.SD_CONFIG.CONFIG.path, "models", "Stable-diffusion")
-    ) is not None:
-        logging.info(f"Model {model.filename}[{model.hash}] downloaded, checking SD availability...")
 
-        # Refreshing SD models list to apply updates after download
-        webui_api.refresh_models()
-        return check_model(model)
+    model_path = download(file_url=model.path,
+                          save_path=Path(config.SD_CONFIG.CONFIG.path, "models", "Stable-diffusion"))
+    if model_path is None: return False
 
-    return False
+    if get_file_sha256(str(model_path)) != model.hash:
+        logging.critical(f"Downloaded model {model.filename}[{model.hash}] does not match requested model {model.filename}[{model.hash}]!")
+        return False
+
+    logging.info(f"Model {model.filename}[{model.hash}] downloaded, checking SD availability...")
+    webui_api.refresh_checkpoints()
+    return True
 
 
 def check_lora(loras_info: list[SDLora]) -> bool:
