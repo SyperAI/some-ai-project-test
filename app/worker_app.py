@@ -30,9 +30,10 @@ def get_supported() -> list[str]:
 def is_supported(task_type: str) -> bool:
     supported = get_supported()
 
-    if task_type == TaskType.TXT2IMG.value and AIType.SDXL.value not in supported or AIType.SD15.value not in supported: return False
-    elif task_type == TaskType.LLM.value and AIType.LLM.value not in supported: return False
-    else: return True
+    if task_type == TaskType.TXT2IMG.value and AIType.SDXL.value in supported or AIType.SD15.value in supported: return True
+    elif task_type == TaskType.LLM.value and AIType.LLM.value in supported: return True
+
+    return False
 
 class WorkerApp:
     def __init__(self, base_url: str, api_key: str) -> None:
