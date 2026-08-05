@@ -123,6 +123,7 @@ def llm_task(task: LLMRequest):
         system=task.system_prompt,
         prompt=task.prompt,
         options=task.options,
+        think=task.think
     )
 
     return answer['response'].strip()

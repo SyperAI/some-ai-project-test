@@ -27,6 +27,13 @@ def get_supported() -> list[str]:
     return supports
 
 
+def is_supported(task_type: str) -> bool:
+    supported = get_supported()
+
+    if task_type == TaskType.TXT2IMG.value and AIType.SDXL.value not in supported or AIType.SD15.value not in supported: return False
+    elif task_type == TaskType.LLM.value and AIType.LLM.value not in supported: return False
+    else: return True
+
 class WorkerApp:
     def __init__(self, base_url: str, api_key: str) -> None:
         logging.getLogger("httpx").setLevel(logging.CRITICAL)
@@ -50,7 +57,7 @@ class WorkerApp:
     def _dispatch_and_execute(self, task_data: dict) -> Any:
         task_type = task_data.get("type")
 
-        if task_type not in get_supported():
+        if not is_supported(task_type):
             logging.warning("Recieved unsupported task of type %s!", task_type)
             return None
 

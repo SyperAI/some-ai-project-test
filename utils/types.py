@@ -23,7 +23,6 @@ class TaskType(Enum):
     TXT2IMG = "txt2img"
     LLM = "llm"
 
-
 class Task(BaseModel):
     id: str
     type: TaskType
@@ -164,6 +163,7 @@ class LLMRequest(BaseModel):
 
     max_tokens: int | None = None
     temperature: float | None = None
+    think: bool | None = None
 
     @property
     def options(self):
