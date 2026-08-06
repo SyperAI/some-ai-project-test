@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import subprocess
@@ -6,18 +7,31 @@ import time
 from pathlib import Path
 from subprocess import Popen
 
-import httpx
 import requests.exceptions
 from webuiapi import WebUIApi
 
 from utils import config, logger, get_file_sha256
-from utils.gpu import get_vram, get_compute_cap
+from utils.gpu import get_vram, get_compute_cap, is_nvidia_available, GPUInfoStorage
 
 if sys.platform == "win32":
     python_exe = os.path.join(config.SD_CONFIG.CONFIG.path, "venv", "Scripts", "python.exe")
 else:
     # Linux / macOS
     python_exe = os.path.join(config.SD_CONFIG.CONFIG.path, "venv", "bin", "python")
+
+if not is_nvidia_available() and config.SD_CONFIG.CONFIG.enable:
+    logger.warning("nvidia-smi was not found, trying to obtain gpu info via torch...")
+
+    subprocess.run([python_exe, "gpu_info_torch.py"], check=True)
+
+    info_file = Path(".gpuinfo")
+    if not info_file.exists():
+        logger.error("Can't load GPU info.")
+        sys.exit(1)
+
+    GPUInfoStorage.gpu_info = json.load(info_file.open('r'))
+    logger.info(f"GPU info loaded via torch: {GPUInfoStorage.gpu_info}")
+
 
 vram_gb = get_vram() / 1024
 opti_flags = []
@@ -50,8 +64,8 @@ if "--no-download-sd-model" not in START_FLAGS: START_FLAGS.append("--no-downloa
 
 command = [python_exe, LAUNCH_SCRIPT] + START_FLAGS + opti_flags
 
-
 os.environ["STABLE_DIFFUSION_REPO"] = "https://github.com/w-e-w/stablediffusion.git"
+
 
 def start_a1111():
     if sys.platform == "win32":
@@ -99,7 +113,8 @@ def get_webui() -> tuple[None, None] | tuple[SDWebUI, Popen]:
                 logger.info(f"Found SD model {model['title']}[{model_sha256}]")
 
             # Applying default model if exists in config
-            if config.SD_CONFIG.PARAMS.default_model != "": webui_api.set_options({"sd_model_checkpoint": config.SD_CONFIG.PARAMS.default_model})
+            if config.SD_CONFIG.PARAMS.default_model != "": webui_api.set_options(
+                {"sd_model_checkpoint": config.SD_CONFIG.PARAMS.default_model})
             break
         except requests.exceptions.ConnectionError:
             logger.warning("SD Web UI connection failed, retrying in 1s...")
