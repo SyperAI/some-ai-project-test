@@ -1,7 +1,9 @@
 import logging
+import queue
 import sys
 import time
 import traceback
+from threading import Thread
 from typing import Dict, Callable, Any
 
 import httpx
@@ -30,10 +32,13 @@ def get_supported() -> list[str]:
 def is_supported(task_type: str) -> bool:
     supported = get_supported()
 
-    if task_type == TaskType.TXT2IMG.value and AIType.SDXL.value in supported or AIType.SD15.value in supported: return True
-    elif task_type == TaskType.LLM.value and AIType.LLM.value in supported: return True
+    if task_type == TaskType.TXT2IMG.value and AIType.SDXL.value in supported or AIType.SD15.value in supported:
+        return True
+    elif task_type == TaskType.LLM.value and AIType.LLM.value in supported:
+        return True
 
     return False
+
 
 class WorkerApp:
     def __init__(self, base_url: str, api_key: str) -> None:
@@ -41,6 +46,14 @@ class WorkerApp:
 
         self.base_url = base_url
         self.api_key = api_key
+
+        self.task_queue = queue.Queue()
+        self.task_processing_ids = set()
+        self.polling_thread = Thread(target=self._polling)
+
+        self._headers = {
+            "X-Api-Key": self.api_key,
+        }
 
         self._handlers: Dict[TaskType, Callable] = {}
 
@@ -62,7 +75,7 @@ class WorkerApp:
             logging.warning("Recieved unsupported task of type %s!", task_type)
             return None
 
-        logger.info(f"Task id={task_data['id']} of type {task_type} received")
+        logger.info(f"Processing task id={task_data['id']} of type {task_type}...")
 
         if not task_type:
             logging.warning(f"Current task has no task type!")
@@ -102,6 +115,43 @@ class WorkerApp:
         r = client.post(f"{self.base_url}/node/form-result", headers=headers, data=form_data, files=form_files)
         if not r.json()['status']: sys.exit(1)
 
+    def _polling(self):
+        with httpx.Client(timeout=30) as client:
+            while True:
+                try:
+                    fetch_url = f"{self.base_url}/node/fetch"
+
+                    response = client.get(fetch_url, headers=self._headers)
+                    if response.status_code != httpx.codes.OK:
+                        logging.error(
+                            f"Request failed with status code {response.status_code}, sleeping for 1s before retrying...")
+                        time.sleep(1)
+                        continue
+
+                    task_data = response.json()
+                    if task_data is None:
+                        continue
+
+                    if len(task_data) < 1:
+                        time.sleep(1)
+                        continue
+
+                    for task in task_data:
+                        if task['id'] not in self.task_processing_ids:
+                            logger.info(f"Task id={task['id']} queued")
+                            self.task_processing_ids.add(task['id'])
+                            self.task_queue.put(task)
+                    else:
+                        time.sleep(1)
+
+                except httpx.RequestError as e:
+                    logging.error(f"Network error: {e}, retry in 5s...")
+                    time.sleep(5)
+                except Exception as e:
+                    logging.critical(f"Polling error: {e}")
+                    traceback.print_exc()
+                    time.sleep(5)
+
     def run(self):
         logging.info("Starting node")
 
@@ -121,36 +171,19 @@ class WorkerApp:
                 logger.critical(response.text)
                 raise RuntimeError("Node login failed!")
 
+            self.polling_thread.start()
+
             while True:
                 try:
-                    fetch_url = f"{self.base_url}/node/fetch"
-                    headers = {
-                        "X-Api-Key": self.api_key,
-                    }
-
-                    response = client.get(fetch_url, headers=headers)
-                    if response.status_code != httpx.codes.OK:
-                        logging.error(f"Request failed with status code {response.status_code}, sleeping for 1s before retrying...")
-                        time.sleep(1)
-                        continue
-
-                    task_data = response.json()
-                    if task_data is None:
-                        continue
-
-                    if len(task_data) < 1:
-                        time.sleep(1)
-                        continue
-
-                    # TODO: Change for whole list processing
-                    task_data = task_data[0]
+                    task_data = self.task_queue.get()
 
                     with Timer(name=f"Task id={task_data['id']}", print_func=logging.info):
                         try:
-                            client.put(f"{self.base_url}/node/task-info", headers=headers, json={
+                            client.put(f"{self.base_url}/node/task-info", headers=self._headers, json={
                                 "task_id": task_data['id'],
                                 "status": "processing",
                             })
+
                             result = self._dispatch_and_execute(task_data)
                             status = True if result else False
                         except Exception as e:
@@ -159,15 +192,18 @@ class WorkerApp:
                             result = None
                             status = False
 
-                    if type(result) in (T2IResponse,):
-                        self.send_multipart_result(client=client, task_data=task_data, status=status, result=result)
-                        continue
+                    try:
+                        if type(result) in (T2IResponse,):
+                            self.send_multipart_result(client=client, task_data=task_data, status=status, result=result)
+                            continue
 
-                    client.post(f"{self.base_url}/node/result", headers=headers, json={
-                        "status": status,
-                        "task_id": task_data["id"],
-                        "result": result.model_dump(mode='json') if isinstance(result, BaseModel) else result,
-                    })
+                        client.post(f"{self.base_url}/node/result", headers=self._headers, json={
+                            "status": status,
+                            "task_id": task_data["id"],
+                            "result": result.model_dump(mode='json') if isinstance(result, BaseModel) else result,
+                        })
+                    finally:
+                        self.task_processing_ids.remove(task_data["id"])
 
                 except httpx.RequestError as e:
                     logging.error(f"Network error: {e}, retry in 5s...")

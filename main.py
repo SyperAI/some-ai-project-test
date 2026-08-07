@@ -54,7 +54,8 @@ def check_model(model: AIModelData) -> bool:
     if model_path is None: return False
 
     if get_file_sha256(str(model_path)) != model.hash:
-        logging.critical(f"Downloaded model {model.filename}[{model.hash}] does not match requested model {model.filename}[{model.hash}]!")
+        logging.critical(
+            f"Downloaded model {model.filename}[{model.hash}] does not match requested model {model.filename}[{model.hash}]!")
         return False
 
     logging.info(f"Model {model.filename}[{model.hash}] downloaded, checking SD availability...")
@@ -87,14 +88,22 @@ def txt2img(task: T2IRequest):
         return None
     webui_api.set_options({"sd_model_checkpoint": task.model.filename})
 
-
     # Check LoRa and download if not exists
     if len(task.lora_info) > 0:
         if not check_lora(task.lora_info): return None
 
     # Apply adetailer if given
     if task.adetailer is not None:
-        alwayson_scripts["ADetailer"] = {"args": [task.adetailer.to_args(), False, False, False]}
+        alwayson_scripts["ADetailer"] = {
+            "args": [
+                True,
+                False,
+                task.adetailer.to_args(),
+                {},
+                {},
+                {}
+            ]
+        }
 
     try:
         actual_sampler, actual_scheduler = split_sampler_and_scheduler(str(task.sampler_name))
