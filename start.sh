@@ -9,7 +9,7 @@ if [ "$LOCAL" = "$REMOTE" ]; then
     echo "Up to date."
 else
     echo "Update available: $LOCAL -> $REMOTE"
-    sh install.sh
+    sh install.sh --update
 fi
 
 source venv/bin/activate

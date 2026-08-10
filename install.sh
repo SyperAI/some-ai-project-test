@@ -19,4 +19,4 @@ fi
 source venv/bin/activate
 uv pip install -r requirements.txt
 
-python installer.py
+python installer.py "$@"

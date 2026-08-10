@@ -178,8 +178,16 @@ if __name__ == "__main__":
         action="store_true",
         help="Automatically start SD WebUI."
     )
+    parser.add_argument(
+        "--update",
+        action="store_true",
+        help="Polls will not be used. Use if you want to update node."
+    )
 
     args = parser.parse_args()
+
+    if args.update:
+        sys.exit(0)
 
     from utils import Config
 
