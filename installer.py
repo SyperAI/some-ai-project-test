@@ -1,3 +1,4 @@
+import argparse
 import os.path
 import platform
 import subprocess
@@ -111,19 +112,26 @@ def install_sd(path: str) -> None:
         print("Failed to install venv for SD!")
 
 def sd_poll() -> None:
-    is_enabled = confirm_action("Do you want to enable Stable Diffusion?: ")
+    is_enabled = args.sd_enabled if args.sd_enabled is not None else confirm_action("Do you want to enable Stable Diffusion?: ")
     config.SD_CONFIG.CONFIG.enable = is_enabled
+
     if not is_enabled:
         print("Stable Diffusion will not be enabled.")
         return
 
-    if confirm_action("Do you want to install Stable Diffusion? Answer 'No' if you already installed it (Yes/No): "):
-        sd_path = input("Enter path where to install Stable Diffusion: ")
-        install_sd(sd_path)
+    if args.sd_path:
+        sd_path = args.sd_path
+    elif confirm_action("Do you want to install Stable Diffusion? Answer 'No' if you already installed it (Yes/No): "):
+        sd_path = Path(input("Enter path where to install Stable Diffusion: "))
+        install_sd(str(sd_path))
     else:
-        sd_path = input("Enter path where Stable Diffusion is installed (Default: current working directory): ")
+        sd_path = Path(input("Enter path where Stable Diffusion is installed (Default: current working directory): "))
 
-    for child in Path(sd_path).iterdir():
+    if not sd_path.exists():
+        print("Stable Diffusion folder doesn't exist!")
+        sys.exit(1)
+
+    for child in sd_path.iterdir():
         if Path(child).is_file() and "webui-user" in str(child).lower():
             print("Stable Diffusion found.")
             break
@@ -132,7 +140,7 @@ def sd_poll() -> None:
         sys.exit(1)
 
     config.SD_CONFIG.CONFIG.path = sd_path
-    config.SD_CONFIG.CONFIG.auto_start = True
+    config.SD_CONFIG.CONFIG.auto_start = args.sd_auto_start
 
 
 def worker_poll() -> None:
@@ -143,16 +151,35 @@ def worker_poll() -> None:
 
 
 if __name__ == "__main__":
-    # venv_name = create_venv()
-    #
-    # if os.name == "nt":
-    #     pip_path = os.path.join(venv_name, "Scripts", "pip.exe")
-    #     python_path = os.path.join(venv_name, "Scripts", "python.exe")
-    # else:
-    #     pip_path = os.path.join(venv_name, "bin", "pip")
-    #     python_path = os.path.join(venv_name, "bin", "python")
-    #
-    # install_requirements()
+    parser = argparse.ArgumentParser(
+        prog="node-installer",
+        description="Node installer assistant"
+    )
+
+    parser.add_argument(
+        "--llm-enabled",
+        action="store_true",
+        help="Enables Ollama if passed. !SKIPPED FOR NOW!"
+    )
+
+    parser.add_argument(
+        "--sd-enabled",
+        action="store_true",
+        default=None,
+        help="Enables SD requests if passed. If passed will skip question about SD WebUI path."
+    )
+    parser.add_argument(
+        "--sd-path",
+        type=Path,
+        help="Path to SD WebUI directory. If passed will skip question about SD WebUI path."
+    )
+    parser.add_argument(
+        "--sd-auto-start",
+        action="store_true",
+        help="Automatically start SD WebUI."
+    )
+
+    args = parser.parse_args()
 
     from utils import Config
 
