@@ -38,29 +38,28 @@ def models_list():
     return models.model_dump(include={'__all__': {'model_name', 'sha256'}})
 
 
-def check_model(model: AIModelData) -> bool:
+def check_model(model: AIModelData) -> str | None:
     webui_api.refresh_checkpoints()
 
     local_models = webui_api.get_sd_models()
 
     for local_model in local_models:
         # We need to check twice because A1111 dont create hash for never loaded models but we dont want to re-download model
-        if model.hash == local_model['sha256'] or model.hash == get_file_sha256(local_model['filename']): return True
+        if model.hash == local_model['sha256'] or model.hash == get_file_sha256(local_model['filename']): return local_model['model_name']
 
     logging.warning(f"Requested model {model.filename}[{model.hash}] not found, trying download...")
 
     model_path = download(file_url=model.path,
                           save_path=Path(config.SD_CONFIG.CONFIG.path, "models", "Stable-diffusion"))
-    if model_path is None: return False
+    if model_path is None: return None
 
     if get_file_sha256(str(model_path)) != model.hash:
         logging.critical(
             f"Downloaded model {model.filename}[{model.hash}] does not match requested model {model.filename}[{model.hash}]!")
-        return False
+        return None
 
     logging.info(f"Model {model.filename}[{model.hash}] downloaded, checking SD availability...")
-    webui_api.refresh_checkpoints()
-    return True
+    return check_model(model)
 
 
 def check_lora(loras_info: list[SDLora]) -> bool:
@@ -84,9 +83,11 @@ def txt2img(task: T2IRequest):
     alwayson_scripts = {}
 
     # Check and use model
-    if not check_model(task.model):
+    model_name = check_model(task.model)
+    if model_name is None:
         return None
-    webui_api.set_options({"sd_model_checkpoint": task.model.filename})
+
+    webui_api.set_options({"sd_model_checkpoint": model_name})
 
     # Check LoRa and download if not exists
     if len(task.lora_info) > 0:
