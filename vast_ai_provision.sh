@@ -7,9 +7,7 @@ set -eo pipefail
 git clone https://github.com/SyperAI/some-ai-project-test.git
 cd some-ai-project-test
 
-uv venv venv --python 3.11
-source venv/bin/activate
-uv pip install -r requirements.txt
+sh install.sh --skip-credits --sd-enabled --sd-path "/workspace/stable-diffusion-webui-forge" "$@"
 
 # Cloning ADetailer
 cd /workspace/stable-diffusion-webui-forge/extensions
