@@ -61,7 +61,7 @@ def download(file_url: str, save_path: str | Path) -> Path | None:
     save_path.mkdir(parents=True, exist_ok=True)
     save_path = save_path / os.path.basename(file_url)
 
-    logger.debug(f"Downloading {file_url} to {save_path}")
+    logger.info(f"Downloading {file_url} to {save_path}")
     try:
         with httpx.Client(http2=True) as client:
             with client.stream("GET", file_url) as response:
