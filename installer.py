@@ -148,6 +148,7 @@ if __name__ == "__main__":
         "--download",
         action="append",
         metavar=('URL', 'DEST'),
+        nargs=2,
         help="Download a file from URL to DEST."
     )
 
