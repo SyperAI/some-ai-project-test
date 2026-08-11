@@ -6,6 +6,7 @@ import sys
 from pathlib import Path
 
 from utils.gpu import get_gpu_name, get_compute_cap
+from utils.utils import download
 
 OS_TYPE = platform.system()
 
@@ -44,25 +45,6 @@ def check_git() -> None:
     except (subprocess.CalledProcessError, FileNotFoundError):
         print("Git is not available, trying to install...")
         install_git()
-
-
-def create_venv() -> str:
-    if os.path.exists("venv") or os.path.exists(".venv"):
-        print("Found existing venv, skipping...")
-        return "venv" if os.path.exists("venv") else ".venv"
-
-    subprocess.run([sys.executable, "-m", "venv", "venv"], check=True)
-    if not os.path.exists("venv") and not os.path.exists(".venv"): raise RuntimeError(
-        "Venv wasn't created! Try creating it by yourself with 'python -m venv' or open github issue.")
-
-    return "venv"
-
-
-def install_requirements() -> None:
-    # Updating pip
-    subprocess.run([python_path, "-m", "pip", "install", "--upgrade", "pip"], check=True)
-
-    subprocess.run([pip_path, "install", "-r", "requirements.txt"], check=True)
 
 
 def confirm_action(prompt: str) -> bool:
@@ -157,6 +139,19 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
+        "--skip-credits",
+        action="store_true",
+        help="Skip credits poll."
+    )
+
+    parser.add_argument(
+        "--download",
+        action="append",
+        metavar=('URL', 'DEST'),
+        help="Download a file from URL to DEST."
+    )
+
+    parser.add_argument(
         "--llm-enabled",
         action="store_true",
         help="Enables Ollama if passed. !SKIPPED FOR NOW!"
@@ -184,12 +179,17 @@ if __name__ == "__main__":
         help="Polls will not be used. Use if you want to update node."
     )
 
+
     args = parser.parse_args()
+
+    if args.download:
+        for url, dest in args.download:
+            download(url, dest)
 
     if args.update:
         sys.exit(0)
 
-    from utils import Config
+    from utils import Config, download
 
     config = Config(allow_missing=True).load()
 
@@ -197,6 +197,8 @@ if __name__ == "__main__":
         print("GPU drivers may be incompatible or missing!")
 
     sd_poll()
-    worker_poll()
+
+    if not args.skip_credits:
+        worker_poll()
 
     config.save()

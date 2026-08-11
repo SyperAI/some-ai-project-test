@@ -16,7 +16,7 @@ class SDConfig(BaseModel):
 
 class SDParams(BaseModel):
     host: str = "localhost"
-    port: int = 7861
+    port: int = 7860
     username: str | None = None
     password: str | None = None
     default_model: str | None = None
