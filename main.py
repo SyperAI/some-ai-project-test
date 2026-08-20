@@ -142,6 +142,7 @@ def llm_task(task: LLMRequest):
 if __name__ == "__main__":
     try:
         app.run()
-    except KeyboardInterrupt:
+    finally:
         if sd_webui_process is not None:
             sd_webui_process.kill()
+

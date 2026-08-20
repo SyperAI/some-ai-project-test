@@ -273,6 +273,8 @@ def get_webui() -> tuple[None, None] | tuple[SDWebUI, Popen]:
 
     for x in range(30):
         try:
+            webui_api.refresh_checkpoints()
+
             models = webui_api.get_sd_models()
             logger.info(f"Connected to SD and found {len(models)} checkpoints")
 

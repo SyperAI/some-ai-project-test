@@ -113,6 +113,11 @@ class WorkerApp:
         form_data['status'] = status
 
         r = client.post(f"{self.base_url}/node/form-result", headers=headers, data=form_data, files=form_files)
+
+        if not r.is_success:
+            logger.error(r.text)
+            sys.exit(1)
+
         if not r.json()['status']: sys.exit(1)
 
     def _polling(self):
